@@ -3,33 +3,38 @@ from typing import List, Callable
 from threading import Timer
 
 
+old_syncs = []
+current_sync = None
+sync_timer = None
+
+
+class Syncer:
+  def __init__(self, name: str):
+    self.name = name
+    self.ready = False
+
+
 class Sync:
   def __init__(self, syncers: List[str]):
-    self.syncers_names = syncers
-    self.syncers_ready = list(map(lambda x: False, syncers))
+    self.syncers = [Syncer(s) for s in syncers]
 
   def ready(self, syncer: str) -> bool:
     ls = syncer.lower()
-    for i, s in enumerate(self.syncers_names):
-      if ls == s.lower():
-        self.syncers_ready[i] = True
-        self.syncers_names[i] = syncer
+    for s in self.syncers:
+      if ls == s.name.lower():
+        s.ready = True
         return True
     return False
 
   def check_ready(self) -> bool:
-    for s in self.syncers_ready:
-      if not s:
+    for s in self.syncers:
+      if not s.ready:
         return False
     return True
 
   def syncers_str(self) -> str:
-    return ', '.join(self.syncers_names[:-1]) + " and " + self.syncers_names[-1]
-
-
-old_syncs = []
-current_sync = None
-sync_timer = None
+    l = [s.name for s in self.syncers]
+    return ', '.join(l[:-1]) + " and " + l[-1]
 
 
 def commence_sync(bot_msg: Callable[[str], None]) -> None:
@@ -73,6 +78,7 @@ def prepare_syncer_list(starter: str, syncers: List[str]) -> List[str]:
   l = list(map(lambda x: x.lower(), syncers))
   return list(set(l))
 
+
 def check_if_valid(syncers: List[str], channel_users: List[str]) -> bool:
   for s in syncers:
     found = False
@@ -89,7 +95,7 @@ def check_if_valid(syncers: List[str], channel_users: List[str]) -> bool:
 
 
 def start_sync(starter: str, syncers: List[str], channel_users: List[str],
-                bot_msg: Callable[[str], None]) -> None:
+               bot_msg: Callable[[str], None]) -> None:
   global current_sync, sync_timer
   if current_sync == None:
     if check_if_valid(syncers, channel_users):
@@ -114,22 +120,34 @@ def ready_syncer(syncer: str, bot_msg: Callable[[str], None]) -> None:
       bot_msg("You are not in the current sync!")
 
 
-def resync(bot_msg: Callable[[str], None]) -> None:
+def resync(starter: str, bot_msg: Callable[[str], None]) -> None:
   if current_sync == None:
     bot_msg("Wait for the current sync to finish!")
   else:
-    start_sync(map(lambda x: x[0], old_syncs[-1].syncers))
+    sync = map(lambda x: x[0], old_syncs[-1].syncers)
+
+    contains_syncer = False
+    for s in sync:
+      if s.lower() == starter.lower():
+        contains_syncer = True
+
+    if contains_syncer:
+      start_sync()
+    else:
+      bot_msg("You were not in the last sync!")
 
 
 def desync(bot_msg: Callable[[str], None]) -> None:
   bot_msg("Desyncing...")
 
+
 #endregion
 
+"""
 # temp tests
-start_sync('name0', ['name0', 'name1', 'name2'], ['name0', 'name1', 'name2'], print)
-ready_syncer('Name4', print)
+start_sync('name0', ['name0', 'name^1', 'name2'], ['name0', 'name^1', 'name2'], print)
 ready_syncer('name0', print)
-ready_syncer('Name1', print)
+ready_syncer('Name^1', print)
+ready_syncer('|N_X|4_cG_4iH4xW\\Nkx1z2GXL0u', print)
 ready_syncer('Name2', print)
-#start_sync('rep', ['name0', 'name1', 'name2'], print)
+"""
