@@ -1,12 +1,22 @@
 from time import sleep
 from typing import List, Callable
 from threading import Timer
+from collections import OrderedDict, Counter
 
 
 old_syncs = []
 current_sync = None
 sync_timer = None
+sync_groups = OrderedDict()
 
+timer_time = 90.0
+group_limit = 5
+
+
+class SyncGroup:
+  def __init__(self, name: str, syncers: List[str]):
+    self.name = name
+    self.syncers = syncers
 
 class Syncer:
   def __init__(self, name: str):
@@ -75,8 +85,7 @@ def prepare_syncer_list(starter: str, syncers: List[str]) -> List[str]:
   and removes duplicates.
   """
   syncers.append(starter)
-  l = list(map(lambda x: x.lower(), syncers))
-  return list(set(l))
+  return set(map(lambda x: x.lower(), syncers))
 
 
 def check_if_valid(syncers: List[str], channel_users: List[str]) -> bool:
@@ -91,7 +100,7 @@ def check_if_valid(syncers: List[str], channel_users: List[str]) -> bool:
   return True
 
 
-#region Public API
+#region API
 
 
 def start_sync(starter: str, syncers: List[str], channel_users: List[str],
@@ -101,7 +110,7 @@ def start_sync(starter: str, syncers: List[str], channel_users: List[str],
     if check_if_valid(syncers, channel_users):
       current_sync = Sync(prepare_syncer_list(starter, syncers))
       bot_msg("Buckle up syncers!")
-      sync_timer = Timer(120.0, lambda: fail_sync(bot_msg))
+      sync_timer = Timer(timer_time, lambda: fail_sync(bot_msg))
       sync_timer.start()
     else:
       bot_msg("Invalid syncer!")
@@ -137,17 +146,39 @@ def resync(starter: str, bot_msg: Callable[[str], None]) -> None:
       bot_msg("You were not in the last sync!")
 
 
-def desync(bot_msg: Callable[[str], None]) -> None:
-  bot_msg("Desyncing...")
+def desync(caller: str, bot_msg: Callable[[str], None]) -> None:
+  print(caller)
+  print([s.name.lower() for s in current_sync.syncers])
+  if caller in [s.name.lower() for s in current_sync.syncers]:
+    bot_msg("Desyncing...")
+    end_sync()
+  else:
+      bot_msg("You are not in the current sync!")
+
+def create_sync_group(starter: str, name: str, syncers: List[str],
+                      bot_msg: Callable[[str], None]) -> None:
+  s = prepare_syncer_list(starter, syncers)
+  if name.lower() in sync_groups.keys():
+    print("There is a already a group with that name!")
+  else:
+    sync_groups[name.lower()] = s
+    if len(sync_groups) > group_limit:
+      r = sync_groups.popitem(False)
+      print("Removing group '%s' because theres too many groups!" % r[0])
+    print("Group added!")
+
+def start_sync_by_group(starter: str, group: str, channel_users: List[str],
+                        bot_msg: Callable[[str], None]) -> None:
+  g = group.lower()
+  if g in sync_groups:
+    if starter.lower() in sync_groups[g]:
+      start_sync(starter, list(sync_groups[g]), channel_users, bot_msg)
+      sync_groups.move_to_end(g)
+    else:
+      print("You aren't in that group!")
+  else:
+    print("That group does not exist!")
+
 
 
 #endregion
-
-"""
-# temp tests
-start_sync('name0', ['name0', 'name^1', 'name2'], ['name0', 'name^1', 'name2'], print)
-ready_syncer('name0', print)
-ready_syncer('Name^1', print)
-ready_syncer('|N_X|4_cG_4iH4xW\\Nkx1z2GXL0u', print)
-ready_syncer('Name2', print)
-"""
