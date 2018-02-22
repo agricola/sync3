@@ -10,13 +10,14 @@ sync_timer = None
 sync_groups = OrderedDict()
 
 timer_time = 90.0
-group_limit = 5
+group_limit = 100
 
 
 class SyncGroup:
   def __init__(self, name: str, syncers: List[str]):
     self.name = name
     self.syncers = syncers
+
 
 class Syncer:
   def __init__(self, name: str):
@@ -155,6 +156,7 @@ def desync(caller: str, bot_msg: Callable[[str], None]) -> None:
   else:
       bot_msg("You are not in the current sync!")
 
+
 def create_sync_group(starter: str, name: str, syncers: List[str],
                       bot_msg: Callable[[str], None]) -> None:
   s = prepare_syncer_list(starter, syncers)
@@ -167,6 +169,7 @@ def create_sync_group(starter: str, name: str, syncers: List[str],
       print("Removing group '%s' because theres too many groups!" % r[0])
     print("Group added!")
 
+
 def start_sync_by_group(starter: str, group: str, channel_users: List[str],
                         bot_msg: Callable[[str], None]) -> None:
   g = group.lower()
@@ -178,7 +181,6 @@ def start_sync_by_group(starter: str, group: str, channel_users: List[str],
       print("You aren't in that group!")
   else:
     print("That group does not exist!")
-
 
 
 #endregion
