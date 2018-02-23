@@ -148,8 +148,9 @@ def resync(starter: str, bot_msg: Callable[[str], None]) -> None:
 
 
 def desync(caller: str, bot_msg: Callable[[str], None]) -> None:
-  bot_msg(caller)
-  bot_msg([s.name.lower() for s in current_sync.syncers])
+  if current_sync is None:
+    bot_msg("There is no sync!")
+    return
   if caller in [s.name.lower() for s in current_sync.syncers]:
     bot_msg("Desyncing...")
     end_sync()
