@@ -90,9 +90,9 @@ def prepare_syncer_list(starter: str, syncers: List[str]) -> List[str]:
 
 
 def check_if_valid(syncers: List[str], channel_users: List[str]) -> bool:
-  for s in syncers:
+  for s in [sy.lower() for sy in syncers]:
     found = False
-    for u in channel_users:
+    for u in [cu.lower() for cu in channel_users]:
       if s == u:
         found = True
         continue
