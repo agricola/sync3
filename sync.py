@@ -148,26 +148,26 @@ def resync(starter: str, bot_msg: Callable[[str], None]) -> None:
 
 
 def desync(caller: str, bot_msg: Callable[[str], None]) -> None:
-  print(caller)
-  print([s.name.lower() for s in current_sync.syncers])
+  bot_msg(caller)
+  bot_msg([s.name.lower() for s in current_sync.syncers])
   if caller in [s.name.lower() for s in current_sync.syncers]:
     bot_msg("Desyncing...")
     end_sync()
   else:
-      bot_msg("You are not in the current sync!")
+    bot_msg("You are not in the current sync!")
 
 
 def create_sync_group(starter: str, name: str, syncers: List[str],
                       bot_msg: Callable[[str], None]) -> None:
   s = prepare_syncer_list(starter, syncers)
   if name.lower() in sync_groups.keys():
-    print("There is a already a group with that name!")
+    bot_msg("There is a already a group with that name!")
   else:
     sync_groups[name.lower()] = s
     if len(sync_groups) > group_limit:
       r = sync_groups.popitem(False)
-      print("Removing group '%s' because theres too many groups!" % r[0])
-    print("Group added!")
+      bot_msg("Removing group '%s' because theres too many groups!" % r[0])
+    bot_msg("Group added!")
 
 
 def start_sync_by_group(starter: str, group: str, channel_users: List[str],
@@ -178,9 +178,9 @@ def start_sync_by_group(starter: str, group: str, channel_users: List[str],
       start_sync(starter, list(sync_groups[g]), channel_users, bot_msg)
       sync_groups.move_to_end(g)
     else:
-      print("You aren't in that group!")
+      bot_msg("You aren't in that group!")
   else:
-    print("That group does not exist!")
+    bot_msg("That group does not exist!")
 
 
 #endregion
