@@ -130,19 +130,18 @@ def ready_syncer(syncer: str, bot_msg: Callable[[str], None]) -> None:
       bot_msg("You are not in the current sync!")
 
 
-def resync(starter: str, bot_msg: Callable[[str], None]) -> None:
-  if current_sync == None:
+def resync(starter: str, channel_users: List[str], bot_msg: Callable[[str], None]) -> None:
+  if current_sync is not None:
     bot_msg("Wait for the current sync to finish!")
   else:
-    sync = map(lambda x: x[0], old_syncs[-1].syncers)
-
+    syncers = [s.name for s in old_syncs[-1].syncers]
     contains_syncer = False
-    for s in sync:
+    for s in syncers:
       if s.lower() == starter.lower():
         contains_syncer = True
 
     if contains_syncer:
-      start_sync()
+      start_sync(starter, syncers, channel_users, bot_msg)
     else:
       bot_msg("You were not in the last sync!")
 
@@ -185,3 +184,9 @@ def start_sync_by_group(starter: str, group: str, channel_users: List[str],
 
 
 #endregion
+start_sync("coal", ["coal", "dino"], ["coal", "dino", "agri"], print)
+ready_syncer("coal", print)
+ready_syncer("dino", print)
+resync("coal", ["coal", "dino", "agri"], print)
+ready_syncer("coal", print)
+ready_syncer("dino", print)
