@@ -162,8 +162,12 @@ def desync(caller: str, bot_msg: Callable[[str], None]) -> None:
 
 
 def create_sync_group(starter: str, name: str, syncers: List[str],
+                      channel_users: List[str],
                       bot_msg: Callable[[str], None]) -> None:
   s = prepare_syncer_list(starter, syncers)
+  if not check_if_valid(s, channel_users):
+    bot_msg("Invalid syncer!")
+    return
   if len(s) <= 1:
     bot_msg("You need more people to make a group!")
     return
@@ -191,3 +195,5 @@ def start_sync_by_group(starter: str, group: str, channel_users: List[str],
 
 
 #endregion
+
+create_sync_group("agri", "team", ["agri", "dino"], ["agri","Dino"], print)
