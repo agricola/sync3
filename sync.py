@@ -65,7 +65,7 @@ def end_sync() -> None:
   global current_sync, sync_timer
   store_old_sync(current_sync)
   current_sync = None
-  if sync_timer != None:
+  if sync_timer is not None:
     sync_timer.cancel()
     sync_timer = None
 
@@ -107,9 +107,13 @@ def check_if_valid(syncers: List[str], channel_users: List[str]) -> bool:
 def start_sync(starter: str, syncers: List[str], channel_users: List[str],
                bot_msg: Callable[[str], None]) -> None:
   global current_sync, sync_timer
-  if current_sync == None:
+  if current_sync is None:
     if check_if_valid(syncers, channel_users):
       current_sync = Sync(prepare_syncer_list(starter, syncers))
+      if len(current_sync.syncers) <= 1:
+        current_sync = None
+        bot_msg("You need more people to sync!")
+        return
       bot_msg("Buckle up syncers!")
       sync_timer = Timer(timer_time, lambda: fail_sync(bot_msg))
       sync_timer.start()
@@ -120,7 +124,7 @@ def start_sync(starter: str, syncers: List[str], channel_users: List[str],
 
 
 def ready_syncer(syncer: str, bot_msg: Callable[[str], None]) -> None:
-  if current_sync == None:
+  if current_sync is None:
     bot_msg("There is no sync!")
   else:
     if current_sync.ready(syncer):
@@ -160,6 +164,9 @@ def desync(caller: str, bot_msg: Callable[[str], None]) -> None:
 def create_sync_group(starter: str, name: str, syncers: List[str],
                       bot_msg: Callable[[str], None]) -> None:
   s = prepare_syncer_list(starter, syncers)
+  if len(s) <= 1:
+    bot_msg("You need more people to make a group!")
+    return
   if name.lower() in sync_groups.keys():
     bot_msg("There is a already a group with that name!")
   else:
@@ -184,9 +191,3 @@ def start_sync_by_group(starter: str, group: str, channel_users: List[str],
 
 
 #endregion
-start_sync("coal", ["coal", "dino"], ["coal", "dino", "agri"], print)
-ready_syncer("coal", print)
-ready_syncer("dino", print)
-resync("coal", ["coal", "dino", "agri"], print)
-ready_syncer("coal", print)
-ready_syncer("dino", print)
