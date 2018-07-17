@@ -58,9 +58,10 @@ class Sync:
     return True
 
   def syncers_str(self) -> str:
-    l = [s.name for s in self.syncers]
-    return ', '.join(l[:-1]) + " and " + l[-1]
+    return name_list_str([s.name for s in self.syncers])
 
+def name_list_str(names) -> str:
+    return ', '.join(names[:-1]) + " and " + names[-1]
 
 def commence_sync(bot_msg: Callable[[str], None]) -> None:
   bot_msg("Let's go " + current_sync.syncers_str())
@@ -153,6 +154,7 @@ def resync(starter: str, channel_users: List[str], bot_msg: Callable[[str], None
     bot_msg(WAIT_MSG)
   else:
     syncers = [s.name for s in old_syncs[-1].syncers]
+    bot_msg("Resync: " + name_list_str(syncers))
     contains_syncer = False
     for s in syncers:
       if s.lower() == starter.lower():
@@ -200,6 +202,7 @@ def start_sync_by_group(starter: str, group: str, channel_users: List[str],
   g = group.lower()
   if g in sync_groups:
     if starter.lower() in sync_groups[g]:
+      bot_msg("Group " + g + " sync: " + name_list_str(list(sync_groups[g])))
       start_sync(starter, list(sync_groups[g]), channel_users, bot_msg)
       sync_groups.move_to_end(g)
     else:
@@ -209,18 +212,3 @@ def start_sync_by_group(starter: str, group: str, channel_users: List[str],
 
 
 #endregion
-
-"""
-create_sync_group("agri", "team", ["agri", "dino"], ["agri","Dino"], print)
-start_sync("agri", ["agri", "dino"], ["agri", "dino"], print)
-desync("agri", print)
-resync("agri", ["agri", "dino"], print)
-desync("agri", print)
-start_sync_by_group("agri", "team", ["agri", "dino"], print)
-desync("agri", print)
-start_sync("agri", ["agri"], ["agri"], print)
-desync("agri", print)
-start_sync("agri", ["agri", "dino"], ["agri", "dino"], print)
-ready_syncer("agri", print)
-ready_syncer("dino", print)
-"""
