@@ -32,7 +32,6 @@ class SyncGroup:
     self.name = name
     self.syncers = syncers
 
-
 class Syncer:
   def __init__(self, name: str):
     self.name = name
@@ -60,8 +59,15 @@ class Sync:
   def syncers_str(self) -> str:
     return name_list_str([s.name for s in self.syncers])
 
+
 def name_list_str(names) -> str:
     return ', '.join(names[:-1]) + " and " + names[-1]
+
+def part_of_list(list, name: str) -> bool:
+  for s in list:
+    if s.lower() == name.lower():
+      return True
+  return False
 
 def commence_sync(bot_msg: Callable[[str], None]) -> None:
   bot_msg("Let's go " + current_sync.syncers_str())
@@ -97,11 +103,14 @@ def store_old_sync(sync: Sync) -> None:
 
 
 def prepare_syncer_list(starter: str, syncers: List[str]) -> List[str]:
-  """ Adds the sync starter to the list, makes all names lowercase,
-  and removes duplicates.
-  """
-  syncers.append(starter)
-  return set(map(lambda x: x.lower(), syncers))
+  # Adds the sync starter to the list, and removes duplicates.
+  include_starter = True
+  for s in syncers:
+    if starter.lower() == s.lower():
+      include_starter = False
+  if include_starter:
+    syncers.append(starter)
+  return set(syncers)
 
 
 def check_if_valid(syncers: List[str], channel_users: List[str]) -> bool:
@@ -201,7 +210,7 @@ def start_sync_by_group(starter: str, group: str, channel_users: List[str],
                         bot_msg: Callable[[str], None]) -> None:
   g = group.lower()
   if g in sync_groups:
-    if starter.lower() in sync_groups[g]:
+    if part_of_list(sync_groups[g], (starter)):
       bot_msg("Group " + g + " sync: " + name_list_str(list(sync_groups[g])))
       start_sync(starter, list(sync_groups[g]), channel_users, bot_msg)
       sync_groups.move_to_end(g)
